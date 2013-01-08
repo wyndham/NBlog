@@ -1,31 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
-using MbUnit.Framework;
-using MongoDB.Driver;
 using NBlog.Web.Application.Infrastructure;
 using NBlog.Web.Application.Service.Entity;
 using NBlog.Web.Application.Storage;
-using NBlog.Web.Application.Storage.Json;
-using NBlog.Web.Application.Storage.Mongo;
-using NBlog.Web.Application.Storage.Sql;
+using NUnit.Framework;
 
 namespace NBlog.Tests
 {
-    public class RepositoryTests
+    public abstract class RepositoryTests
     {
-        private static readonly RepositoryKeys Keys;
-
-        private static readonly string JsonWorkingFolder;
-
-        private static readonly string SqlConnectionString = ConfigurationManager.AppSettings["SqlConnectionString"];
-        private static readonly string SqlDatabaseName = ConfigurationManager.AppSettings["SqlDatabaseName"];
-
-        private static readonly string MongoConnectionString =  ConfigurationManager.AppSettings["MongoConnectionString"];
-        private static readonly string MongoDatabaseName = ConfigurationManager.AppSettings["MongoDatabaseName"];
+        protected static readonly RepositoryKeys Keys;
 
         static RepositoryTests()
         {
@@ -33,89 +17,17 @@ namespace NBlog.Tests
             Keys.Add<Entry>(e => e.Slug);
             Keys.Add<Config>(c => c.Site);
             Keys.Add<User>(u => u.Username);
-
-            JsonWorkingFolder = Path.Combine(Path.GetTempPath(), "NBlogIntegrationTests");
         }
 
-
-        [TearDown]
-        public void TestCleanup()
+        [SetUp]
+        public void SetUp()
         {
-            var repositoryType = Instance.GetType();
-
-            if (repositoryType == typeof(JsonRepository))
-            {
-                if (Directory.Exists(JsonWorkingFolder))
-                {
-                    Directory.Delete(JsonWorkingFolder, recursive: true);
-                }
-            }
-            else if (repositoryType == typeof(SqlRepository))
-            {
-                using (var cnn = new SqlConnection(SqlConnectionString))
-                using (var cmd = new SqlCommand("EXEC sp_MSforeachtable @command1 = 'TRUNCATE TABLE ?'", cnn))
-                {
-                    cnn.Open();
-                    cnn.ChangeDatabase(SqlDatabaseName);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            else if (repositoryType == typeof(MongoRepository))
-            {
-                var server = MongoServer.Create(MongoConnectionString);
-                server.DropDatabase(MongoDatabaseName);
-            }
+            Instance = GetRepository();
         }
 
-
-        [FixtureTearDown]
-        public void FixtureTearDown()
-        {
-            if (Instance.GetType() == typeof(SqlRepository))
-            {
-                const string dropSql = @"
-                    ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE
-                    DROP DATABASE [{0}]";
-
-                using (var cnn = new SqlConnection(SqlConnectionString))
-                using (var cmd = new SqlCommand(string.Format(dropSql, SqlDatabaseName), cnn))
-                {
-                    cnn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-
-        public static IEnumerable<IRepository> GetInstances()
-        {
-            yield return BuildJsonRepository();
-            yield return BuildSqlRepository();
-            yield return BuildMongoRepository();
-        }
-
-
-        [Factory("GetInstances")]
         public IRepository Instance;
 
-
-        private static JsonRepository BuildJsonRepository()
-        {
-            return new JsonRepository(Keys, new HttpTenantSelector());
-        }
-
-
-        private static SqlRepository BuildSqlRepository()
-        {
-            return new SqlRepository(Keys, SqlConnectionString, SqlDatabaseName);
-        }
-
-
-        private static MongoRepository BuildMongoRepository()
-        {
-            return new MongoRepository(Keys, MongoConnectionString, MongoDatabaseName);
-        }
-
+        protected abstract IRepository GetRepository();
 
         [Test]
         public void Single_Should_Return_Correct_Entity_By_Key()

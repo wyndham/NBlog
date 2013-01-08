@@ -50,6 +50,9 @@
     <Reference Include="NSubstitute">
       <HintPath>..\NBlog.Lib\NSubstitute.dll</HintPath>
     </Reference>
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
@@ -67,9 +70,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EntryControllerTests.cs" />
+    <Compile Include="JsonRepositoryTests.cs" />
+    <Compile Include="MongoRepositoryTests.cs" />
     <Compile Include="RepositoryTests.cs" />
     <Compile Include="SlugTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SqlRepositoryTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NBlog.Web\NBlog.Web.csproj">
@@ -81,6 +87,7 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
