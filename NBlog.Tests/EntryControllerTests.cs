@@ -8,6 +8,7 @@ using NUnit.Framework;
 
 namespace NBlog.Tests
 {
+    
     [TestFixture]
     public class EntryControllerTests
     {
